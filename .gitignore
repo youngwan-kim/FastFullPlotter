@@ -5,6 +5,9 @@ __pycache__/
 
 # C extensions
 *.so
+*.root
+*.png
+*.pdf
 
 # Distribution / packaging
 .Python
