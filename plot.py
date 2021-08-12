@@ -2,17 +2,40 @@ import os, sys
 from ROOT import TCanvas, TPad, TFile, TPaveLabel, TPaveText, TLatex, TLegend, TH1F, kRed, kGreen
 
 # filename format : samplename_campaign.root 
-# sample name should not contain underscores ( ex. Monojet1000 )
 # identical root files should be in both Files/FastSim and Files/FullSim
 
 fastsim_dir = os.getcwd()+"/Files/FastSim/"
 fullsim_dir = os.getcwd()+"/Files/FullSim/"
 output_dir = os.getcwd()+"/Outputs/"
 
+fastsimfiles=[] ; fullsimfiles=[]
+onlyfastsim=[] ; onlyfullsim=[]
+files=[]
+
 for filename in os.listdir(fastsim_dir) : 
-  # find identical sample+campaign 
-  dirname = filename.split("_")[0]
-  campname = filename.split("_")[1].split(".")[0]
+  fastsimfiles.append(filename)
+
+for filename in os.listdir(fullsim_dir) :
+  fullsimfiles.append(filename)
+
+onlyfastsim = list(set(fastsimfiles)-set(fullsimfiles))
+onlyfullsim = list(set(fullsimfiles)-set(fastsimfiles))
+
+for onlyfast in onlyfastsim :
+  print("[Plotter] FullSim file "+onlyfast+" doesn't exist in the FullSim directory. Skipping "+onlyfast+"...")
+
+for onlyfull in onlyfullsim :
+  print("[Plotter] FastSim file "+onlyfull+" doesn't exist in the FastSim directory. Skipping "+onlyfull+"...")
+
+files = list(set(fastsimfiles)-set(onlyfastsim))
+
+print("[Plotter] Files to be plotted : " + ",".join(files))
+
+for filename in files :
+
+  print("[Plotter] Plotting "+filename)
+  dirname = filename.rsplit("_",1)[0]
+  campname = filename.rsplit("_",1)[1].split(".")[0]
 
   # make output directory structure
   if not os.path.exists(output_dir+dirname) :
