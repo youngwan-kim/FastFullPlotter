@@ -18,11 +18,10 @@ args = parser.parse_args()
 def plot(files) : 
   for filename in files :
   
+    rescale = 0 ; n_ul16apv = 0 ; n_ul16 = 0 ;
     print("[Plotter] Plotting "+filename)
     dirname = filename.rsplit("_",1)[0]
-    campname = filename.rsplit("_",1)[1].split(".")[0]
-    print(dirname)
-    print(campname)  
+    campname = filename.rsplit("_",1)[1].split(".")[0] 
 
     # make output directory structure
     if not os.path.exists(output_dir+dirname) :
@@ -32,13 +31,24 @@ def plot(files) :
     if os.path.exists(output_dir+dirname) and not os.path.exists(output_dir+dirname+"/"+campname) :
       os.makedirs(output_dir+dirname+"/"+campname)
 
+    # for FullSim UL16APV campaigns, use FastSim UL16 files for validation
+    # rescaling is implemented by acting a scale factor to FullSim UL16APV histograms
     if campname == "UL16APV" :
-      print("apv detect")
       fastsim = TFile(fastsim_dir+dirname+"_UL16.root")
+      if not os.path.isfile(fullsim_dir+dirname+"_UL16.root") :
+        print("[Error] In order to rescale UL16APV FullSim files, UL16 campaign file for the sample is also needed")
+	exit()
+      else : 
+        rescalefile = TFile(fullsim_dir+dirname+"_UL16.root")
     else : 
       fastsim = TFile(fastsim_dir+filename)
     fullsim = TFile(fullsim_dir+filename)
     plotdir = fullsim.Get("plots")  
+
+    if campname == "UL16APV" :
+      n_ul16 = rescalefile.Get("plots/TotalEvents").GetBinContent(1)
+      n_ul16apv = fullsim.Get("plots/TotalEvents").GetBinContent(1)
+      rescale = n_ul16 / n_ul16apv
 
     for key in plotdir.GetListOfKeys() :
       histname = key.ReadObj().GetName()
@@ -46,7 +56,11 @@ def plot(files) :
       fullhist = fullsim.Get("plots/"+histname)
       fasthist.SetStats(0)
       fullhist.SetStats(0)
-      
+
+      if campname == "UL16APV" :
+        fullhist = fullhist * rescale
+	print("rescaling fullsim ul16apv histograms")  
+
       fasthist.SetLineColor(kRed+1)
       fasthist.SetFillColorAlpha(kRed+1,0.3)
       fullhist.SetLineColor(kGreen+1)
